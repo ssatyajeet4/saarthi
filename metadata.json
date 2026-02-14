@@ -1,0 +1,7 @@
+{
+  "name": "Saarthi AI",
+  "description": "Your intelligent, voice-first study companion for Class 4 & 5 students.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
