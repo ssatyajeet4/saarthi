@@ -47,7 +47,9 @@ const TutorSession: React.FC = () => {
   }, [location.state]);
 
   useEffect(() => {
-    return () => liveServiceRef.current?.disconnect();
+    return () => {
+      liveServiceRef.current?.disconnect();
+    };
   }, []);
 
   // --- Visual Generation Logic ---

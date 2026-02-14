@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 
 interface AudioVisualizerProps {
@@ -7,7 +8,7 @@ interface AudioVisualizerProps {
 
 const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ isActive, color = '#6366f1' }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -54,7 +55,7 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ isActive, color = '#6
     draw();
 
     return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
     };
   }, [isActive, color]);
 
