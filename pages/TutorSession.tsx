@@ -46,6 +46,39 @@ const TutorSession: React.FC = () => {
     }
   }, [location.state]);
 
+  // 2. Wake Lock Implementation (Keeps screen ON)
+  useEffect(() => {
+    let wakeLock: any = null;
+
+    const requestWakeLock = async () => {
+      if (isSessionActive && 'wakeLock' in navigator) {
+        try {
+          // @ts-ignore - Navigator types might not be fully updated in all environments
+          wakeLock = await navigator.wakeLock.request('screen');
+          console.log('Screen Wake Lock active');
+        } catch (err) {
+          console.log('Wake Lock request failed:', err);
+        }
+      }
+    };
+
+    if (isSessionActive) {
+      requestWakeLock();
+    } else {
+        if (wakeLock) {
+            wakeLock.release().then(() => {
+                wakeLock = null;
+            });
+        }
+    }
+
+    return () => {
+      if (wakeLock) {
+          wakeLock.release().catch(console.error);
+      }
+    };
+  }, [isSessionActive]);
+
   useEffect(() => {
     return () => {
       liveServiceRef.current?.disconnect();
