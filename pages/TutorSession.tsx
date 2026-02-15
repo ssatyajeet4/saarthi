@@ -313,7 +313,7 @@ const TutorSession: React.FC = () => {
 
         {/* Live Transcript Bubble */}
         <div className={`mt-2 px-6 py-4 bg-white/60 backdrop-blur-sm rounded-2xl border max-w-sm w-full min-h-[80px] text-center flex items-center justify-center transition-all shadow-sm ${status === 'HTTPS Required' || status === 'Mic Permission Denied' ? 'border-red-300 bg-red-50' : 'border-white/50'}`}>
-            <p className={`font-medium leading-relaxed text-sm ${status === 'HTTPS Required' || status === 'Mic Permission Denied' ? 'text-red-600' : 'text-slate-600'}`}>
+            <p className={`font-medium leading-relaxed text-sm whitespace-pre-wrap ${status === 'HTTPS Required' || status === 'Mic Permission Denied' ? 'text-red-600' : 'text-slate-600'}`}>
                 {status === 'HTTPS Required' 
                     ? "Microphone blocked! Please use HTTPS or USB Debugging." 
                     : status === 'Mic Permission Denied' 

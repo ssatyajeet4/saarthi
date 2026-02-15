@@ -46,6 +46,7 @@ export class GeminiLiveService {
   private onToolCalled: () => void; // Callback to refresh UI
   private onTranscript: (text: string) => void; // Callback for text output
   private onVisualRequest: (prompt: string, concept: string) => void;
+  private currentTranscript = '';
 
   constructor(
     apiKey: string, 
@@ -63,6 +64,8 @@ export class GeminiLiveService {
 
   async connect(initialContext?: string) {
     this.onStatusChange('Connecting...');
+    this.currentTranscript = ''; // Reset transcript on new connection
+    this.onTranscript('');
     
     // Check if Mic is supported/allowed (detects insecure origin)
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -152,9 +155,10 @@ export class GeminiLiveService {
         this.nextStartTime += audioBuffer.duration;
     }
 
-    // 2. Handle Text Transcription
+    // 2. Handle Text Transcription (Accumulate text to show full sentences)
     if (message.serverContent?.outputTranscription?.text) {
-        this.onTranscript(message.serverContent.outputTranscription.text);
+        this.currentTranscript += message.serverContent.outputTranscription.text;
+        this.onTranscript(this.currentTranscript);
     }
 
     // 3. Handle Tool Calls
@@ -187,9 +191,11 @@ export class GeminiLiveService {
         }
     }
     
-    // 4. Handle Interruption
+    // 4. Handle Interruption (Clear transcript to avoid confusion)
     if (message.serverContent?.interrupted) {
         this.nextStartTime = this.outputAudioContext?.currentTime || 0;
+        this.currentTranscript = ''; // Optional: clear text if user interrupts
+        this.onTranscript('');
     }
   }
 
