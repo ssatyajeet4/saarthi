@@ -35,6 +35,19 @@ const createVisualTool: FunctionDeclaration = {
   }
 };
 
+// Tool Definition for providing translation text (Visual only, no audio)
+const provideTranslationTool: FunctionDeclaration = {
+  name: 'provideTranslation',
+  description: 'Provide the English translation text for the user to read. Do not speak this text. Use this before speaking the Kannada response.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      englishText: { type: Type.STRING, description: 'The English text to display.' }
+    },
+    required: ['englishText']
+  }
+};
+
 export class GeminiLiveService {
   private ai: GoogleGenAI;
   private inputAudioContext: AudioContext | null = null;
@@ -98,7 +111,7 @@ export class GeminiLiveService {
         responseModalities: [Modality.AUDIO],
         outputAudioTranscription: {}, // Enable text transcription of the AI response
         systemInstruction: finalSystemInstruction,
-        tools: [{ functionDeclarations: [updateProgressTool, createVisualTool] }],
+        tools: [{ functionDeclarations: [updateProgressTool, createVisualTool, provideTranslationTool] }],
         speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
         },
@@ -157,6 +170,13 @@ export class GeminiLiveService {
 
     // 2. Handle Text Transcription (Accumulate text to show full sentences)
     if (message.serverContent?.outputTranscription?.text) {
+        // If we recently added English text via tool, ensure Kannada starts on new line if needed
+        if (this.currentTranscript.endsWith("Kannada: ")) {
+             // Already prepared
+        } else if (this.currentTranscript.length > 0 && !this.currentTranscript.endsWith('\n')) {
+            // this.currentTranscript += ' '; // Optional spacing
+        }
+        
         this.currentTranscript += message.serverContent.outputTranscription.text;
         this.onTranscript(this.currentTranscript);
     }
@@ -177,6 +197,15 @@ export class GeminiLiveService {
                 this.onVisualRequest(prompt as string, concept as string);
                 result = 'Visual generation triggered';
             }
+            else if (fc.name === 'provideTranslation') {
+                const { englishText } = fc.args as any;
+                // Inject the English translation into the transcript stream visibly
+                // We add extra newlines to separate it cleanly from previous text
+                const separator = this.currentTranscript.length > 0 ? '\n\n' : '';
+                this.currentTranscript += `${separator}English: ${englishText}\nKannada: `;
+                this.onTranscript(this.currentTranscript);
+                result = 'Translation displayed';
+            }
 
             // Send response back to model
             this.sessionPromise?.then(session => {
@@ -194,8 +223,11 @@ export class GeminiLiveService {
     // 4. Handle Interruption (Clear transcript to avoid confusion)
     if (message.serverContent?.interrupted) {
         this.nextStartTime = this.outputAudioContext?.currentTime || 0;
-        this.currentTranscript = ''; // Optional: clear text if user interrupts
-        this.onTranscript('');
+        // Don't clear full transcript on interrupt, just stop audio, 
+        // as user might still be reading the translation. 
+        // But if you want to clear, uncomment below:
+        // this.currentTranscript = ''; 
+        // this.onTranscript('');
     }
   }
 
